@@ -56,7 +56,7 @@ when you write prose for them.
 
 8. **Do not make an inanimate thing do an action it cannot do.** Do not write
    something like "logs become searchable records". Name the person or the tool
-   that does it, or use a plain verb, e.g., "you can search the logs". Settled
+   that does it, or use a plain verb, e.g., "you can search the logs". Common
    phrases like "the paper argues" are fine.
 
 9. **Do not invent hyphenated adjectives.** A common compound adjective that
