@@ -66,9 +66,9 @@ when you write prose for them.
    words. A good test is whether you would find the term in a dictionary or hear
    it in normal speech. If not, write it out.
 
-10. **Do not pad with "carries weight" or "matters".** These add nothing, and
-    "carry" and "weight" are tired metaphors. Instead of "this result matters",
-    state the actual point, or cut the sentence.
+10. **Do not pad with empty emphasis words.** Words like "really" and "real"
+    usually only add emphasis, so drop them. Do not say that something "matters"
+    or "carries weight". State the actual point, or cut the sentence.
 
 11. **Keep lists and examples simple.**
     - Do not write a three-part series in a sentence, e.g., "it is simple,
