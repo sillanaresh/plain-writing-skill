@@ -23,19 +23,22 @@ when you write prose for them.
 
 1. **Use simple, everyday words.** Prefer the common word over the fancy one,
    e.g., write "use" rather than "leverage". Short familiar words are faster to
-   read.
+   read. Avoid the words AI tools overuse, e.g., "delve", "tapestry",
+   "landscape", "robust", and "leverage". Also, repeat a word rather than
+   swapping in a synonym just to avoid repeating it.
 
 2. **Write complete sentences.** Each sentence states one clear thing and has a
    subject and a verb. Do not write fragments, and do not stitch several ideas
-   together with colons or semicolons into one dense line. If a sentence is
-   doing two jobs, split it into two.
+   together with colons or semicolons into one dense line. If a sentence states
+   two things, split it into two sentences.
 
 3. **No dashes, and limit colons.** Do not use em dashes or en dashes, including
    in number ranges. Join clauses with a period, or with a word such as "and".
    Write ranges with the word "to", e.g., "0.94 to 0.96". Use a colon only to
    introduce a list. Do not use a colon to join clauses or to set up a point,
    e.g., "Read for the schema: the feature fires". Dashes, and colons used for a
-   point, invite the clever phrasing the user does not want.
+   point, invite the clever phrasing the user does not want. Use straight quotes,
+   not curly quotes, e.g., "the agent" rather than “the agent”.
 
 4. **No jargon.** Do not use shorthand from a field when a plain phrase works.
    If a technical term is truly needed, say it once and explain it in plain
@@ -43,10 +46,14 @@ when you write prose for them.
 
 5. **No analogies or imagery.** Do not explain something by comparing it to a
    different thing. Do not use a metaphor or any phrase meant to sound smart.
-   Describe the actual thing in literal terms.
+   Describe the actual thing in literal terms. Avoid the "not just X, it is Y"
+   pattern, e.g., "it is not just a parser, it is a toolchain". State what the
+   thing is.
 
 6. **No filler.** Cut words and phrases that add nothing, e.g., "it is worth
-   noting that". Every sentence should add something the reader needs.
+   noting that". Every sentence should add something the reader needs. Watch for
+   an "-ing" tail that adds fake analysis, e.g., "stores results, highlighting
+   its value". Cut it, or say the plain reason.
 
 7. **Explain things fully and clearly.** Plain also does not mean terse. If an
    idea is compressed into one cramped sentence, expand it so each point gets
@@ -67,9 +74,11 @@ when you write prose for them.
    words. A good test is whether you would find the term in a dictionary or hear
    it in normal speech. If not, write it out.
 
-10. **Do not pad with empty emphasis words.** Words like "really" and "real" add
-    emphasis but no information, so drop them. Do not say that something
-    "matters" or "carries weight". State the actual point, or cut the sentence.
+10. **Do not pad with empty emphasis or puffery words.** Words like "really" and
+    "real" add emphasis but no information, so drop them. Do not say that
+    something "matters" or "carries weight". Do not puff something up with words
+    like "boasts", "a testament to", "pivotal", or "renowned". State the actual
+    point, or cut the sentence.
 
 11. **Keep lists and examples simple.**
     - Do not write a three-part series in a sentence, e.g., "it is simple,
@@ -77,6 +86,14 @@ when you write prose for them.
       a bullet list. Do not pad a list to three just for rhythm.
     - When you use an example to make a point, give one example and introduce it
       with "e.g.". Do not stack several examples for the same point.
+
+12. **Do not attribute a claim to no one.** Do not hide a claim behind a vague
+    source, e.g., "experts say" or "studies show". Name the source, or cut the
+    claim.
+
+13. **Keep the formatting plain.** Use sentence case in a heading, e.g., "How to
+    install the skill", not "How To Install The Skill". Do not use boldface as
+    decoration, such as bolding the first phrase of every bullet.
 
 ## How to revise
 
@@ -135,7 +152,7 @@ reason for each change appears when the user hovers the colored text.
 
 ## Examples
 
-These are before and after pairs from the user's own edits.
+These are before and after pairs.
 
 **Example 1. Dashes and jargon.**
 Before: Fresh-annotation re-scoring (cache bypassed) moved means by less than
@@ -179,3 +196,24 @@ across many files.
 **Example 7. Empty importance words.**
 Before: This result matters, and it carries weight for the design.
 After: As a result, the system can skip the model on most documents.
+
+**Example 8. Puffery.**
+Before: This release stands as a testament to the team and plays a pivotal role
+in parsing.
+After: We added streaming in this release, and other teams now use it.
+
+**Example 9. An "-ing" tail that adds fake analysis.**
+Before: The cache stores results, highlighting its value for speed.
+After: The cache stores results, so repeated queries are faster.
+
+**Example 10. Negative parallelism.**
+Before: It is not just a parser, it is a full toolchain.
+After: It is a parser and a formatter.
+
+**Example 11. Vague attribution.**
+Before: Experts say this approach scales well.
+After: In our benchmark, this approach handled a million rows.
+
+**Example 12. Elegant variation.**
+Before: Upload the document. The file is parsed, and the record is saved.
+After: Upload the document. The document is parsed and saved.
