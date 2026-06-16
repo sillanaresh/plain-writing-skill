@@ -29,8 +29,8 @@ Some tools have a set place for skills:
 git clone https://github.com/shreyashankar/plain-writing-skill ~/.claude/skills/plain-writing
 ```
 
-- Other agents, such as Codex or pi: add `SKILL.md` to the files the agent
-  reads, such as a rules file or the system prompt.
+- Other agents, e.g., Codex or pi, can use the rules too. Paste the rules from
+  `SKILL.md` into whatever instructions that agent reads.
 
 Then ask the agent to write or revise some text. It applies the rules on its
 own.
