@@ -54,10 +54,10 @@ when you write prose for them.
    things to list, give each one a clear sentence or its own bullet, not one
    long line. Clarity comes before both shortness and length.
 
-8. **Be careful with verbs on an inanimate subject.** Do not make an inanimate
-   thing do an action it cannot do, e.g., "logs become searchable records". Name
-   the person or the tool that does it, or use a plain verb, e.g., "you can
-   search the logs". Settled phrases like "the paper argues" are fine.
+8. **Do not make an inanimate thing do an action it cannot do.** Do not write
+   something like "logs become searchable records". Name the person or the tool
+   that does it, or use a plain verb, e.g., "you can search the logs". Settled
+   phrases like "the paper argues" are fine.
 
 9. **Do not invent hyphenated adjectives.** A common compound adjective that
    people already use is fine, e.g., "well-crafted". Avoid a phrase you make up
