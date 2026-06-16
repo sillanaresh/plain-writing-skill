@@ -66,9 +66,9 @@ when you write prose for them.
    words. A good test is whether you would find the term in a dictionary or hear
    it in normal speech. If not, write it out.
 
-10. **Do not pad with empty emphasis words.** Words like "really" and "real"
-    usually only add emphasis, so drop them. Do not say that something "matters"
-    or "carries weight". State the actual point, or cut the sentence.
+10. **Do not pad with empty emphasis words.** Words like "really" and "real" add
+    emphasis but no information, so drop them. Do not say that something
+    "matters" or "carries weight". State the actual point, or cut the sentence.
 
 11. **Keep lists and examples simple.**
     - Do not write a three-part series in a sentence, e.g., "it is simple,
@@ -154,7 +154,7 @@ the example posts were written by hand, and finer detail meant training extra
 small models and labeling again.
 After: First, the authors sorted the features into groups themselves, based on
 their own reading of the results. Second, they wrote the example posts by hand
-after reading many real posts. Third, when they wanted finer detail, they
+after reading many of the posts. Third, when they wanted finer detail, they
 trained another small model and labeled the posts again.
 
 **Example 4. Analogy removed.**
@@ -164,8 +164,8 @@ After: The feature index is a list of named features. The optimizer can look up
 which feature matches a request.
 
 **Example 5. Inanimate subject given a human action.**
-Before: The paper argues that the trend is real, and the result bears emphasis.
-After: The authors argue that the trend is real.
+Before: The paper argues that the trend holds, and the result bears emphasis.
+After: The authors argue that the trend holds.
 
 **Example 6. A group of three.**
 Before: Review time on a big change dropped from a full day to under an hour,
