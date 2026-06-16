@@ -3,8 +3,7 @@
 This skill makes an AI agent write in a plain style. The full rules are in
 `SKILL.md`.
 
-It is packaged for Claude Code, but the rules are plain text and any agent can
-use them.
+The rules are plain text, so any agent can use them.
 
 The skill also checks its own writing. It removes anything that does not add
 something, and it writes an HTML file that shows what it changed.
@@ -15,34 +14,29 @@ something, and it writes an HTML file that shows what it changed.
 - `assets/revision_template.html`: the template for the change view. The skill
   fills it in with the edits it made.
 
-## How to install in Claude Code
+## How to use it
 
-Skills live in `~/.claude/skills`. Put these files in a folder named
-`plain-writing` there.
+`SKILL.md` is a plain markdown file with the rules. Any agent that can read a
+file can follow it. The simplest way is to give `SKILL.md` to the agent as
+instructions, in a rules file or the system prompt.
 
-With git:
+Some tools have a set place for skills:
+
+- Claude Code reads skills from `~/.claude/skills`. Clone the repo into a folder
+  named `plain-writing`:
 
 ```
 git clone https://github.com/shreyashankar/plain-writing-skill ~/.claude/skills/plain-writing
 ```
 
-Or download the files and copy them so the layout looks like this:
+- Other agents, such as Codex or pi: add `SKILL.md` to the files the agent
+  reads, such as a rules file or the system prompt.
 
-```
-~/.claude/skills/plain-writing/
-  SKILL.md
-  assets/revision_template.html
-```
+Then ask the agent to write or revise some text. It applies the rules on its
+own.
 
-Claude Code finds the skill the next time it starts.
-
-## How to use it
-
-Ask Claude to write or revise something, or to simplify or clean up text. The
-skill applies the rules on its own. You can also ask for it by name.
-
-When the second pass changes the text, the skill writes an HTML file to `/tmp`.
-The file has three tabs:
+When the change is more than tiny, the agent writes an HTML file to `/tmp`. The
+file has three tabs:
 
 - First draft
 - Second draft
