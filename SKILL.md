@@ -54,10 +54,10 @@ when you write prose for them.
    things to list, give each one a clear sentence or its own bullet, not one
    long line. Clarity comes before both shortness and length.
 
-8. **Do not give inanimate things human actions.** A paper cannot do something
-   that only a person can do. Name the person who does the action, e.g., write
-   "the authors argue" rather than "the paper argues". A plain factual verb for
-   an inanimate subject is fine, e.g., "the table shows the scores".
+8. **Be careful with verbs on an inanimate subject.** Do not make an inanimate
+   thing do an action it cannot do, e.g., "logs become searchable records". Name
+   the person or the tool that does it, or use a plain verb, e.g., "you can
+   search the logs". Settled phrases like "the paper argues" are fine.
 
 9. **Do not invent hyphenated adjectives.** A common compound adjective that
    people already use is fine, e.g., "well-crafted". Avoid a phrase you make up
@@ -165,15 +165,15 @@ through.
 After: The feature index is a list of named features. The optimizer can look up
 which feature matches a request.
 
-**Example 5. Inanimate subject given a human action.**
-Before: The paper argues that the trend holds, and the result bears emphasis.
-After: The authors argue that the trend holds.
+**Example 5. An inanimate thing doing an action it cannot do.**
+Before: The logs become searchable records once the job finishes.
+After: You can search the logs once the job finishes.
 
 **Example 6. A group of three.**
-Before: Review time on a big change dropped from a full day to under an hour,
-weekly output went up threefold, and the rate of bugs per change fell.
-After: Several measures of productivity improved, e.g., review time on a big
-change dropped from a full day to under an hour.
+Before: Configuring things is usually messy: random files, infinite pickers, and
+knobs you didn't even know existed.
+After: Configuring things is usually messy, e.g., the settings are scattered
+across many files.
 
 **Example 7. Empty importance words.**
 Before: This result matters, and it carries weight for the design.
