@@ -95,6 +95,15 @@ when you write prose for them.
     install the skill", not "How To Install The Skill". Do not use boldface as
     decoration, such as bolding the first phrase of every bullet.
 
+14. **Do not stack rhetorical questions.** AI writing often asks two or three
+    rhetorical questions in a row to sound thoughtful, e.g., "Does the AI
+    preserve the writer's voice? Does it make the argument stronger or weaker?"
+    State the problem directly instead of asking the reader to wonder about it.
+
+15. **Do not use the dramatic pivot.** Do not set up a statement and then
+    undercut it in the next sentence, e.g., "X is still opaque. Readers notice
+    Y, but Y is only one symptom." State the full point in one go.
+
 ## How to revise
 
 Revise in two passes.
