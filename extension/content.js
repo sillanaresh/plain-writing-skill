@@ -105,6 +105,7 @@
     input.value = saved.draft;
   }
   updateCount();
+  autoGrow(input);
   restoreLauncher(saved.launcherPosition);
 
   launcher.addEventListener("click", () => {
@@ -166,15 +167,17 @@
     result.hidden = false;
     output.value = "";
 
+    autoGrow(output);
     let streamed = "";
     activePort = chrome.runtime.connect({ name: "pw-rewrite" });
     activePort.onMessage.addListener((message) => {
       if (message.type === "delta") {
         streamed += message.text;
         output.value = streamed;
-        output.scrollTop = output.scrollHeight;
+        autoGrow(output);
       } else if (message.type === "done") {
         output.value = message.text;
+        autoGrow(output);
         finishStream("Done. Edit if you like, then copy.", "success");
       } else if (message.type === "error") {
         if (!streamed) result.hidden = true;
@@ -198,7 +201,18 @@
     if (activePort) { activePort.disconnect(); activePort = null; }
     setBusy(false);
     showStatus(message, state);
-    if (state === "success") { output.focus(); output.select(); }
+    if (state === "success") {
+      autoGrow(output);
+      result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      output.focus();
+      output.select();
+    }
+  }
+
+  // Resize a textarea to fit its content, up to a cap, then scroll inside.
+  function autoGrow(el) {
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight + 2, 320)}px`;
   }
 
   async function copyResult() {
@@ -251,6 +265,7 @@
 
   async function onInput() {
     updateCount();
+    autoGrow(input);
     const { rememberDraft } = await chrome.storage.local.get(["rememberDraft"]);
     if (rememberDraft) chrome.storage.local.set({ draft: input.value });
   }

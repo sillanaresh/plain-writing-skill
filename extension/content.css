@@ -158,7 +158,7 @@ input:focus-visible {
 .pw-textarea, .pw-output {
   display: block;
   width: 100%;
-  min-height: 128px;
+  min-height: 92px;
   padding: 11px 13px;
   border: 1px solid var(--hairline);
   border-radius: 13px;
@@ -239,7 +239,7 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  box-shadow: 0 3px 10px rgba(20, 20, 40, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   transition: background 150ms ease, transform 120ms ease, box-shadow 150ms ease;
 }
 .pw-primary:hover { background: var(--accent-press); }
@@ -281,7 +281,7 @@ input:focus-visible {
   margin-bottom: 7px;
 }
 .pw-result-head > span { font-size: 12px; font-weight: 600; color: var(--muted); }
-.pw-output { background: var(--glass-strong); min-height: 128px; }
+.pw-output { background: var(--glass-strong); min-height: 92px; }
 
 .pw-copy {
   display: flex;
