@@ -2,12 +2,8 @@
   if (window.top !== window) return; // Skip iframes; one launcher per page.
   if (document.getElementById("plain-writing-extension-host")) return;
 
-  const NIB = `
-    <svg class="pw-nib" viewBox="0 0 1024 1024" aria-hidden="true">
-      <path fill="#ffffff" fill-rule="evenodd"
-        d="M412 336 h200 q44 0 50 43 l46 312 q5 34 -22 58 L534 884 q-22 42 -44 0 L230 749 q-27 -24 -22 -58 l46 -312 q6 -43 50 -43 Z M497 566 h30 v232 h-30 Z"/>
-      <circle cx="512" cy="506" r="40" fill="#f59e0b"/>
-    </svg>`;
+  const CAT = chrome.runtime.getURL("icons/launcher-256.png");
+  const catImg = `<img class="pw-cat" src="${CAT}" alt="" draggable="false">`;
 
   const host = document.createElement("div");
   host.id = "plain-writing-extension-host";
@@ -22,17 +18,14 @@
   shell.className = "pw-shell";
   shell.innerHTML = `
     <button class="pw-launcher" type="button" aria-label="Open Plain Writing" title="Plain Writing">
-      ${NIB}
+      ${catImg}
     </button>
 
     <section class="pw-panel" aria-label="Plain Writing" role="dialog" hidden>
       <header class="pw-header">
         <div class="pw-brand">
-          <span class="pw-brand-mark">${NIB}</span>
-          <div>
-            <h2>Plain Writing</h2>
-            <p>Keep your meaning. Make it clear.</p>
-          </div>
+          <span class="pw-brand-mark">${catImg}</span>
+          <h2>Plain Writing</h2>
         </div>
         <div class="pw-header-actions">
           <button class="pw-icon-btn pw-settings" type="button" aria-label="Settings" title="Settings">
