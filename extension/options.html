@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plain Writing settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="settings">
+    <header>
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 1024 1024">
+          <path fill="#fff" fill-rule="evenodd" d="M412 336 h200 q44 0 50 43 l46 312 q5 34 -22 58 L534 884 q-22 42 -44 0 L230 749 q-27 -24 -22 -58 l46 -312 q6 -43 50 -43 Z M497 566 h30 v232 h-30 Z"/>
+          <circle cx="512" cy="506" r="40" fill="#f59e0b"/>
+        </svg>
+      </span>
+      <div>
+        <h1>Plain Writing</h1>
+        <p>Choose the model that rewrites your text.</p>
+      </div>
+    </header>
+
+    <form id="settings-form">
+      <section>
+        <h2>Provider</h2>
+        <div class="provider-toggle" role="tablist" aria-label="Provider">
+          <button type="button" class="provider-option is-active" data-provider="openrouter" role="tab" aria-selected="true">
+            <strong>OpenRouter</strong>
+            <small>One key, hundreds of models</small>
+          </button>
+          <button type="button" class="provider-option" data-provider="openai" role="tab">
+            <strong>OpenAI</strong>
+            <small>Your OpenAI key and models</small>
+          </button>
+        </div>
+
+        <label class="field">
+          <span id="key-label">API key</span>
+          <div class="secret-row">
+            <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your API key">
+            <button id="show-key" class="ghost-btn" type="button" aria-label="Show API key">Show</button>
+          </div>
+          <small id="key-help"></small>
+        </label>
+      </section>
+
+      <section>
+        <h2>Model</h2>
+        <div class="combo" id="model-combo">
+          <input id="model" type="text" autocomplete="off" spellcheck="false" placeholder="Choose or type a model"
+            role="combobox" aria-expanded="false" aria-controls="model-list" aria-autocomplete="list">
+          <button id="load-models" class="ghost-btn" type="button">Load models</button>
+          <ul id="model-list" class="combo-list" role="listbox" hidden></ul>
+        </div>
+        <small id="model-help">Type a model name, or load the list and search it.</small>
+      </section>
+
+      <section>
+        <h2>Drafts</h2>
+        <label class="check-row">
+          <input id="remember-draft" type="checkbox">
+          <span>
+            <strong>Remember unfinished text</strong>
+            <small>Keep the last text you pasted in this browser profile.</small>
+          </span>
+        </label>
+      </section>
+
+      <div class="actions">
+        <button id="test" class="secondary" type="button">Test connection</button>
+        <button class="primary" type="submit">Save settings</button>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+    </form>
+
+    <footer class="page-footer">
+      Your key stays in this browser profile. Your text is sent straight to the provider you pick, only when you rewrite.
+    </footer>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

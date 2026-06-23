@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="pw-bg" gradientUnits="userSpaceOnUse" x1="160" y1="96" x2="880" y2="940">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="0.55" stop-color="#5b50e6"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="232" fill="url(#pw-bg)"/>
+  <!-- fountain-pen nib, pointing down -->
+  <path fill="#ffffff" d="M412 336 h200 q44 0 50 43 l46 312 q5 34 -22 58 L534 884 q-22 42 -44 0 L230 749 q-27 -24 -22 -58 l46 -312 q6 -43 50 -43 Z"/>
+  <!-- slit, cut so the gradient shows through -->
+  <rect x="497" y="556" width="30" height="260" rx="15" fill="url(#pw-bg)"/>
+  <!-- breather hole, the accent -->
+  <circle cx="512" cy="506" r="40" fill="#f59e0b"/>
+</svg>

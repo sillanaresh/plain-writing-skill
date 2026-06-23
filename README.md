@@ -46,3 +46,12 @@ In the Diff tab the removed text is red and the rewritten text is green. The
 reason for each change appears when you hover the colored text.
 
 ![The Diff tab, with removed text in red and rewritten text in green](docs/diff-view.png)
+
+## Browser extension
+
+The same rules also ship as a browser extension. It adds one floating button to
+any web page. You paste your text, rewrite it in the plain style, and copy the
+result, without leaving the page. It works in Arc, Chrome, Edge, and other
+Chromium browsers, and you bring your own OpenRouter or OpenAI key.
+
+See `extension/README.md` for how to install and use it.
