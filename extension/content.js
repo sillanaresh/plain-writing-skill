@@ -5,6 +5,8 @@
   const CAT = chrome.runtime.getURL("icons/launcher-256.png");
   const cat = `<img class="pw-cat" src="${CAT}" alt="" draggable="false">`;
   const caret = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg>`;
+  const mac = /mac/i.test(navigator.platform) || /mac/i.test(navigator.userAgent);
+  const modKey = mac ? "⌘" : "Ctrl";
 
   const host = document.createElement("div");
   host.id = "plain-writing-extension-host";
@@ -42,32 +44,37 @@
           <button class="pw-view" type="button" data-view="original">Original</button>
           <span class="pw-views-gap"></span>
           <button class="pw-copy" type="button">
-            <svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
+            <svg class="pw-copy-icon" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
+            <svg class="pw-check-icon" viewBox="0 0 24 24" hidden><path d="m5 13 4 4L19 7"></path></svg>
             <span>Copy</span>
           </button>
         </div>
 
         <textarea class="pw-text" placeholder="Paste what you wrote."></textarea>
-        <input class="pw-note" type="text" hidden placeholder="Add a note, e.g. keep it casual">
         <p class="pw-status" role="status" aria-live="polite"></p>
 
         <div class="pw-actionbar">
-          <button class="pw-note-toggle" type="button" aria-label="Add a note" title="Add a note">
-            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
-          </button>
           <div class="pw-run">
             <button class="pw-run-go" type="button"><span class="pw-run-label">Rewrite</span></button>
-            <button class="pw-run-menu" type="button" aria-label="Change action" aria-haspopup="true">${caret}</button>
+            <button class="pw-run-menu" type="button" aria-label="Options" aria-haspopup="true">${caret}</button>
           </div>
           <div class="pw-menu" hidden role="menu">
             <button class="pw-menu-item is-active" type="button" role="menuitem" data-mode="rewrite">Rewrite clearly</button>
             <button class="pw-menu-item" type="button" role="menuitem" data-mode="shorten">Make it shorter</button>
             <button class="pw-menu-item" type="button" role="menuitem" data-mode="clean">Light cleanup</button>
+            <div class="pw-menu-sep"></div>
+            <label class="pw-menu-note">
+              <span>Add a note</span>
+              <input class="pw-note" type="text" placeholder="e.g. keep it casual">
+            </label>
           </div>
         </div>
       </div>
 
-      <footer class="pw-footer"><span class="pw-provider">No provider set</span></footer>
+      <footer class="pw-footer">
+        <span class="pw-hint"><kbd>${modKey}</kbd><kbd>⏎</kbd> to rewrite</span>
+        <span class="pw-provider">No provider set</span>
+      </footer>
     </section>
   `;
   shadow.appendChild(shell);
@@ -77,7 +84,6 @@
   const panel = $(".pw-panel");
   const textEl = $(".pw-text");
   const noteEl = $(".pw-note");
-  const noteToggle = $(".pw-note-toggle");
   const status = $(".pw-status");
   const runGo = $(".pw-run-go");
   const runLabel = $(".pw-run-label");
@@ -87,6 +93,8 @@
   const views = $(".pw-views");
   const viewBtns = [...shadow.querySelectorAll(".pw-view")];
   const copyBtn = $(".pw-copy");
+  const copyIcon = $(".pw-copy-icon");
+  const checkIcon = $(".pw-check-icon");
   const provider = $(".pw-provider");
 
   const MODE_LABEL = { rewrite: "Rewrite", shorten: "Shorten", clean: "Clean up" };
@@ -118,11 +126,11 @@
   menuItems.forEach((b) => b.addEventListener("click", () => selectMode(b.dataset.mode)));
   viewBtns.forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
   copyBtn.addEventListener("click", copyResult);
-  noteToggle.addEventListener("click", toggleNote);
+  noteEl.addEventListener("input", () => runMenu.classList.toggle("is-noted", !!noteEl.value.trim()));
   textEl.addEventListener("input", onInput);
   textEl.addEventListener("keydown", onEditorKeydown);
   noteEl.addEventListener("keydown", onEditorKeydown);
-  shadow.addEventListener("click", (e) => { if (menuOpen && !e.target.closest(".pw-run")) closeMenu(); });
+  shadow.addEventListener("click", (e) => { if (menuOpen && !e.target.closest(".pw-actionbar")) closeMenu(); });
 
   chrome.runtime.onMessage.addListener((m) => { if (m?.type === "plain-writing:toggle") setOpen(!open); });
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -153,17 +161,11 @@
   function openMenu() { menu.hidden = false; menuOpen = true; runMenu.setAttribute("aria-expanded", "true"); }
   function closeMenu() { menu.hidden = true; menuOpen = false; runMenu.setAttribute("aria-expanded", "false"); }
 
-  function toggleNote() {
-    const show = noteEl.hidden;
-    noteEl.hidden = !show;
-    noteToggle.classList.toggle("is-on", show || !!noteEl.value.trim());
-    if (show) noteEl.focus();
-  }
-
   function run() {
     const text = textEl.value.trim();
     if (!text) { showStatus("Paste some text first.", "error"); textEl.focus(); return; }
 
+    closeMenu();
     original = textEl.value;
     setBusy(true, "rewriting");
     let streamed = "";
@@ -185,7 +187,8 @@
         view = "plain";
         textEl.value = plain;
         autoGrow(textEl);
-        showViews();
+        crossfade(textEl);
+        revealViews();
         finishRun("Done. Edit if you like, then copy.", "success");
         textEl.focus();
       } else if (m.type === "error") {
@@ -216,16 +219,20 @@
     busy = next;
     textEl.readOnly = next;
     runMenu.disabled = next;
-    noteToggle.disabled = next;
     viewBtns.forEach((b) => (b.disabled = next));
     runGo.classList.toggle("is-busy", next);
     runLabel.textContent = next ? (phase === "refining" ? "Tightening" : "Rewriting") : MODE_LABEL[mode];
     if (next) showStatus("", "");
   }
 
-  function showViews() {
+  function revealViews() {
+    const wasHidden = views.hidden;
     views.hidden = false;
     viewBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.view === view));
+    if (wasHidden) views.animate(
+      [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+      { duration: 220, easing: "cubic-bezier(0.16,1,0.3,1)" }
+    );
   }
 
   function setView(next) {
@@ -234,17 +241,30 @@
     view = next;
     textEl.value = view === "plain" ? plain : original;
     autoGrow(textEl);
+    crossfade(textEl);
     viewBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.view === view));
+  }
+
+  function crossfade(el) {
+    el.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 200, easing: "ease-out" });
   }
 
   async function copyResult() {
     if (!textEl.value) return;
     try {
       await navigator.clipboard.writeText(textEl.value);
-      const span = copyBtn.querySelector("span");
-      span.textContent = "Copied";
+      copyIcon.hidden = true;
+      checkIcon.hidden = false;
+      copyBtn.querySelector("span").textContent = "Copied";
+      copyBtn.classList.add("is-copied");
+      copyBtn.animate([{ transform: "scale(0.94)" }, { transform: "scale(1)" }], { duration: 180, easing: "ease-out" });
       showStatus("Copied to the clipboard.", "success");
-      setTimeout(() => (span.textContent = "Copy"), 1500);
+      setTimeout(() => {
+        copyIcon.hidden = false;
+        checkIcon.hidden = true;
+        copyBtn.querySelector("span").textContent = "Copy";
+        copyBtn.classList.remove("is-copied");
+      }, 1600);
     } catch {
       textEl.focus(); textEl.select();
       showStatus("Press Command C to copy.", "error");
