@@ -96,6 +96,10 @@
   const provider = $(".pw-provider");
 
   const MODE_LABEL = { rewrite: "Rewrite", shorten: "Shorten", clean: "Clean up" };
+  const STALE = "Plain Writing was updated. Refresh this page to use it.";
+  // The extension context is severed when the extension reloads while this page
+  // stays open. chrome.runtime.id becomes undefined; any runtime call then throws.
+  const alive = () => !!(chrome.runtime && chrome.runtime.id);
 
   let open = false;
   let busy = false;
@@ -116,7 +120,11 @@
   launcher.addEventListener("click", () => { if (dragged) { dragged = false; return; } setOpen(!open); });
   $(".pw-close").addEventListener("click", () => setOpen(false));
   $(".pw-new").addEventListener("click", clearAll);
-  $(".pw-settings").addEventListener("click", () => chrome.runtime.sendMessage({ type: "plain-writing:open-options" }));
+  $(".pw-settings").addEventListener("click", () => {
+    if (!alive()) { showStatus(STALE, "error"); return; }
+    try { chrome.runtime.sendMessage({ type: "plain-writing:open-options" }); }
+    catch { showStatus(STALE, "error"); }
+  });
   runGo.addEventListener("click", () => (busy ? cancel() : run()));
   runMenu.addEventListener("click", toggleMenu);
   menuItems.forEach((b) => b.addEventListener("click", () => selectMode(b.dataset.mode)));
@@ -176,6 +184,7 @@
     if (view !== "plain") setView("plain");
     const text = textEl.value.trim();
     if (!text) { showStatus("Paste some text first.", "error"); textEl.focus(); return; }
+    if (!alive()) { showStatus(STALE, "error"); return; }
 
     closeMenu();
     original = textEl.value;
@@ -183,7 +192,13 @@
     let streamed = "";
     let cleared = false;
 
-    activePort = chrome.runtime.connect({ name: "pw-rewrite" });
+    try {
+      activePort = chrome.runtime.connect({ name: "pw-rewrite" });
+    } catch {
+      setBusy(false);
+      showStatus(STALE, "error");
+      return;
+    }
     activePort.onMessage.addListener((m) => {
       if (m.type === "phase") {
         runLabel.textContent = m.phase === "refining" ? "Tightening" : "Rewriting";
@@ -209,8 +224,13 @@
         finishRun(m.error, "error");
       }
     });
-    activePort.onDisconnect.addListener(() => { if (busy) { if (cleared) textEl.value = original; finishRun("The rewrite stopped.", "error"); } });
-    activePort.postMessage({ type: "start", text, mode, instruction: noteEl.value });
+    activePort.onDisconnect.addListener(() => { if (busy) { if (cleared) textEl.value = original; finishRun(alive() ? "The rewrite stopped." : STALE, "error"); } });
+    try {
+      activePort.postMessage({ type: "start", text, mode, instruction: noteEl.value });
+    } catch {
+      setBusy(false);
+      showStatus(STALE, "error");
+    }
   }
 
   function cancel() {
@@ -351,11 +371,15 @@
   function escapeHtml(v) { return String(v).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
 
   async function saveHistory(o, p) {
-    const { keepHistory, history = [] } = await chrome.storage.local.get(["keepHistory", "history"]);
-    if (keepHistory === false) return;
-    history.unshift({ o, p, at: Date.now() });
-    if (history.length > 20) history.length = 20;
-    chrome.storage.local.set({ history });
+    try {
+      const { keepHistory, history = [] } = await chrome.storage.local.get(["keepHistory", "history"]);
+      if (keepHistory === false) return;
+      history.unshift({ o, p, at: Date.now() });
+      if (history.length > 20) history.length = 20;
+      await chrome.storage.local.set({ history });
+    } catch {
+      // Context went away. The rewrite still succeeded; just skip saving.
+    }
   }
 
   function restoreLauncher(position) {
@@ -387,7 +411,7 @@
       launcher.style[side] = "18px";
       launcher.style[side === "right" ? "left" : "right"] = "auto";
       shell.dataset.side = side;
-      chrome.storage.local.set({ launcherPosition: { top: rect.top, side } });
+      try { chrome.storage.local.set({ launcherPosition: { top: rect.top, side } }); } catch { /* stale context */ }
     });
   }
 })();
