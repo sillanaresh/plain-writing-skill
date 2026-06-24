@@ -1,9 +1,10 @@
 (async function mountPlainWriting() {
-  if (window.top !== window) return; // Skip iframes; one launcher per page.
+  if (window.top !== window) return; // one launcher per page, top frame only
   if (document.getElementById("plain-writing-extension-host")) return;
 
   const CAT = chrome.runtime.getURL("icons/launcher-256.png");
-  const catImg = `<img class="pw-cat" src="${CAT}" alt="" draggable="false">`;
+  const cat = `<img class="pw-cat" src="${CAT}" alt="" draggable="false">`;
+  const caret = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg>`;
 
   const host = document.createElement("div");
   host.id = "plain-writing-extension-host";
@@ -17,116 +18,113 @@
   const shell = document.createElement("div");
   shell.className = "pw-shell";
   shell.innerHTML = `
-    <button class="pw-launcher" type="button" aria-label="Open Plain Writing" title="Plain Writing">
-      ${catImg}
-    </button>
+    <button class="pw-launcher" type="button" aria-label="Open Plain Writing" title="Plain Writing">${cat}</button>
 
-    <section class="pw-panel" aria-label="Plain Writing" role="dialog" hidden>
+    <section class="pw-panel" role="dialog" aria-label="Plain Writing" hidden>
       <header class="pw-header">
         <div class="pw-brand">
-          <span class="pw-brand-mark">${catImg}</span>
-          <h2>Plain Writing</h2>
+          <span class="pw-brand-mark">${cat}</span>
+          <span class="pw-wordmark">Plain Writing</span>
         </div>
         <div class="pw-header-actions">
           <button class="pw-icon-btn pw-settings" type="button" aria-label="Settings" title="Settings">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 13a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4 13a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 5.6 7L5.5 7a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 11 4.6V4a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"></path></svg>
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 13a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0 1.6 1.6 0 0 0-2.6-1.1 2 2 0 1 1-2.8-2.8A1.6 1.6 0 0 0 4 13a2 2 0 0 1 0-4 1.6 1.6 0 0 0 1.5-2.6 2 2 0 1 1 2.8-2.8A1.6 1.6 0 0 0 11 4.6V4a2 2 0 0 1 4 0 1.6 1.6 0 0 0 2.7 1.1 2 2 0 1 1 2.8 2.8A1.6 1.6 0 0 0 20 11Z"></path></svg>
           </button>
           <button class="pw-icon-btn pw-close" type="button" aria-label="Close" title="Close">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+            <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></svg>
           </button>
         </div>
       </header>
 
       <div class="pw-body">
-        <label class="pw-label" for="pw-input">Your text</label>
-        <textarea id="pw-input" class="pw-textarea" rows="6" placeholder="Paste what you wrote here, then rewrite it."></textarea>
-        <div class="pw-count" aria-live="polite">0 words</div>
-
-        <div class="pw-controls">
-          <div class="pw-segmented" role="tablist" aria-label="Action">
-            <button class="pw-seg is-active" type="button" data-mode="rewrite" role="tab" aria-selected="true">Rewrite</button>
-            <button class="pw-seg" type="button" data-mode="shorten" role="tab" aria-selected="false">Shorten</button>
-            <button class="pw-seg" type="button" data-mode="clean" role="tab" aria-selected="false">Clean up</button>
-          </div>
-          <input class="pw-instruction" id="pw-instruction" type="text" placeholder="Optional: an extra request, e.g. keep it casual">
+        <div class="pw-views" hidden>
+          <button class="pw-view is-active" type="button" data-view="plain">Plain</button>
+          <button class="pw-view" type="button" data-view="original">Original</button>
+          <span class="pw-views-gap"></span>
+          <button class="pw-copy" type="button">
+            <svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
+            <span>Copy</span>
+          </button>
         </div>
 
-        <button class="pw-primary" type="button">
-          <span class="pw-primary-label">Rewrite</span>
-        </button>
+        <textarea class="pw-text" placeholder="Paste what you wrote."></textarea>
+        <input class="pw-note" type="text" hidden placeholder="Add a note, e.g. keep it casual">
         <p class="pw-status" role="status" aria-live="polite"></p>
 
-        <div class="pw-result" hidden>
-          <div class="pw-result-head">
-            <span>Plain version</span>
-            <button class="pw-copy" type="button">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
-              <span>Copy</span>
-            </button>
+        <div class="pw-actionbar">
+          <button class="pw-note-toggle" type="button" aria-label="Add a note" title="Add a note">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+          <div class="pw-run">
+            <button class="pw-run-go" type="button"><span class="pw-run-label">Rewrite</span></button>
+            <button class="pw-run-menu" type="button" aria-label="Change action" aria-haspopup="true">${caret}</button>
           </div>
-          <textarea class="pw-output" rows="6" aria-label="Plain version"></textarea>
+          <div class="pw-menu" hidden role="menu">
+            <button class="pw-menu-item is-active" type="button" role="menuitem" data-mode="rewrite">Rewrite clearly</button>
+            <button class="pw-menu-item" type="button" role="menuitem" data-mode="shorten">Make it shorter</button>
+            <button class="pw-menu-item" type="button" role="menuitem" data-mode="clean">Light cleanup</button>
+          </div>
         </div>
       </div>
 
-      <footer class="pw-footer">
-        <span class="pw-provider">No provider set</span>
-        <span class="pw-privacy">Text is sent only when you rewrite.</span>
-      </footer>
+      <footer class="pw-footer"><span class="pw-provider">No provider set</span></footer>
     </section>
   `;
   shadow.appendChild(shell);
 
-  const $ = (sel) => shadow.querySelector(sel);
+  const $ = (s) => shadow.querySelector(s);
   const launcher = $(".pw-launcher");
   const panel = $(".pw-panel");
-  const input = $("#pw-input");
-  const instruction = $("#pw-instruction");
-  const segButtons = [...shadow.querySelectorAll(".pw-seg")];
-  const primary = $(".pw-primary");
-  const primaryLabel = $(".pw-primary-label");
+  const textEl = $(".pw-text");
+  const noteEl = $(".pw-note");
+  const noteToggle = $(".pw-note-toggle");
   const status = $(".pw-status");
-  const result = $(".pw-result");
-  const output = $(".pw-output");
+  const runGo = $(".pw-run-go");
+  const runLabel = $(".pw-run-label");
+  const runMenu = $(".pw-run-menu");
+  const menu = $(".pw-menu");
+  const menuItems = [...shadow.querySelectorAll(".pw-menu-item")];
+  const views = $(".pw-views");
+  const viewBtns = [...shadow.querySelectorAll(".pw-view")];
   const copyBtn = $(".pw-copy");
-  const count = $(".pw-count");
   const provider = $(".pw-provider");
+
+  const MODE_LABEL = { rewrite: "Rewrite", shorten: "Shorten", clean: "Clean up" };
 
   let open = false;
   let busy = false;
   let dragged = false;
+  let menuOpen = false;
   let mode = "rewrite";
+  let view = "plain";
+  let hasResult = false;
+  let original = "";
+  let plain = "";
   let activePort = null;
 
   const saved = await chrome.storage.local.get([
     "provider", "openaiModel", "openrouterModel", "rememberDraft", "draft", "launcherPosition"
   ]);
   showProvider(saved);
-  if (saved.rememberDraft && saved.draft) {
-    input.value = saved.draft;
-  }
-  updateCount();
-  autoGrow(input);
+  if (saved.rememberDraft && saved.draft) textEl.value = saved.draft;
+  autoGrow(textEl);
   restoreLauncher(saved.launcherPosition);
 
-  launcher.addEventListener("click", () => {
-    if (dragged) { dragged = false; return; }
-    setOpen(!open);
-  });
+  launcher.addEventListener("click", () => { if (dragged) { dragged = false; return; } setOpen(!open); });
   $(".pw-close").addEventListener("click", () => setOpen(false));
-  $(".pw-settings").addEventListener("click", () => {
-    chrome.runtime.sendMessage({ type: "plain-writing:open-options" });
-  });
-  primary.addEventListener("click", () => (busy ? cancel() : rewrite()));
+  $(".pw-settings").addEventListener("click", () => chrome.runtime.sendMessage({ type: "plain-writing:open-options" }));
+  runGo.addEventListener("click", () => (busy ? cancel() : run()));
+  runMenu.addEventListener("click", toggleMenu);
+  menuItems.forEach((b) => b.addEventListener("click", () => selectMode(b.dataset.mode)));
+  viewBtns.forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
   copyBtn.addEventListener("click", copyResult);
-  input.addEventListener("input", onInput);
-  input.addEventListener("keydown", onEditorKeydown);
-  instruction.addEventListener("keydown", onEditorKeydown);
-  segButtons.forEach((btn) => btn.addEventListener("click", () => selectMode(btn)));
+  noteToggle.addEventListener("click", toggleNote);
+  textEl.addEventListener("input", onInput);
+  textEl.addEventListener("keydown", onEditorKeydown);
+  noteEl.addEventListener("keydown", onEditorKeydown);
+  shadow.addEventListener("click", (e) => { if (menuOpen && !e.target.closest(".pw-run")) closeMenu(); });
 
-  chrome.runtime.onMessage.addListener((message) => {
-    if (message?.type === "plain-writing:toggle") setOpen(!open);
-  });
-
+  chrome.runtime.onMessage.addListener((m) => { if (m?.type === "plain-writing:toggle") setOpen(!open); });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
     if (changes.provider || changes.openaiModel || changes.openrouterModel) {
@@ -140,115 +138,120 @@
     open = next;
     panel.hidden = !open;
     launcher.setAttribute("aria-expanded", String(open));
-    shell.classList.toggle("is-open", open);
-    if (open) setTimeout(() => input.focus(), 40);
+    if (open) setTimeout(() => textEl.focus(), 40);
+    else closeMenu();
   }
 
-  function selectMode(btn) {
-    mode = btn.dataset.mode;
-    segButtons.forEach((b) => {
-      const on = b === btn;
-      b.classList.toggle("is-active", on);
-      b.setAttribute("aria-selected", String(on));
-    });
-    primaryLabel.textContent = mode === "shorten" ? "Shorten" : mode === "clean" ? "Clean up" : "Rewrite";
+  function selectMode(next) {
+    mode = next;
+    runLabel.textContent = MODE_LABEL[mode];
+    menuItems.forEach((b) => b.classList.toggle("is-active", b.dataset.mode === mode));
+    closeMenu();
   }
 
-  function rewrite() {
-    const text = input.value.trim();
-    if (!text) {
-      showStatus("Paste some text first.", "error");
-      input.focus();
-      return;
-    }
+  function toggleMenu() { menuOpen ? closeMenu() : openMenu(); }
+  function openMenu() { menu.hidden = false; menuOpen = true; runMenu.setAttribute("aria-expanded", "true"); }
+  function closeMenu() { menu.hidden = true; menuOpen = false; runMenu.setAttribute("aria-expanded", "false"); }
 
-    setBusy(true);
-    showStatus("", "");
-    result.hidden = false;
-    output.value = "";
+  function toggleNote() {
+    const show = noteEl.hidden;
+    noteEl.hidden = !show;
+    noteToggle.classList.toggle("is-on", show || !!noteEl.value.trim());
+    if (show) noteEl.focus();
+  }
 
-    autoGrow(output);
+  function run() {
+    const text = textEl.value.trim();
+    if (!text) { showStatus("Paste some text first.", "error"); textEl.focus(); return; }
+
+    original = textEl.value;
+    setBusy(true, "rewriting");
     let streamed = "";
+    let cleared = false;
+
     activePort = chrome.runtime.connect({ name: "pw-rewrite" });
-    activePort.onMessage.addListener((message) => {
-      if (message.type === "delta") {
-        streamed += message.text;
-        output.value = streamed;
-        autoGrow(output);
-      } else if (message.type === "done") {
-        output.value = message.text;
-        autoGrow(output);
-        finishStream("Done. Edit if you like, then copy.", "success");
-      } else if (message.type === "error") {
-        if (!streamed) result.hidden = true;
-        finishStream(message.error, "error");
+    activePort.onMessage.addListener((m) => {
+      if (m.type === "phase") {
+        runLabel.textContent = m.phase === "refining" ? "Tightening" : "Rewriting";
+      } else if (m.type === "delta") {
+        if (!cleared) { textEl.value = ""; cleared = true; }
+        streamed += m.text;
+        textEl.value = streamed;
+        autoGrow(textEl);
+      } else if (m.type === "done") {
+        plain = m.text;
+        original = original || text;
+        hasResult = true;
+        view = "plain";
+        textEl.value = plain;
+        autoGrow(textEl);
+        showViews();
+        finishRun("Done. Edit if you like, then copy.", "success");
+        textEl.focus();
+      } else if (m.type === "error") {
+        if (cleared) textEl.value = original;
+        finishRun(m.error, "error");
       }
     });
-    activePort.onDisconnect.addListener(() => {
-      if (busy) finishStream("The rewrite stopped.", "error");
-    });
-    activePort.postMessage({ type: "start", text, mode, instruction: instruction.value });
+    activePort.onDisconnect.addListener(() => { if (busy) { if (cleared) textEl.value = original; finishRun("The rewrite stopped.", "error"); } });
+    activePort.postMessage({ type: "start", text, mode, instruction: noteEl.value });
   }
 
   function cancel() {
     if (activePort) activePort.disconnect();
     activePort = null;
+    textEl.value = original || textEl.value;
+    autoGrow(textEl);
     setBusy(false);
     showStatus("Stopped.", "");
   }
 
-  function finishStream(message, state) {
+  function finishRun(message, state) {
     if (activePort) { activePort.disconnect(); activePort = null; }
     setBusy(false);
     showStatus(message, state);
-    if (state === "success") {
-      autoGrow(output);
-      result.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      output.focus();
-      output.select();
-    }
   }
 
-  // Resize a textarea to fit its content, up to a cap, then scroll inside.
-  function autoGrow(el) {
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight + 2, 320)}px`;
+  function setBusy(next, phase) {
+    busy = next;
+    textEl.readOnly = next;
+    runMenu.disabled = next;
+    noteToggle.disabled = next;
+    viewBtns.forEach((b) => (b.disabled = next));
+    runGo.classList.toggle("is-busy", next);
+    runLabel.textContent = next ? (phase === "refining" ? "Tightening" : "Rewriting") : MODE_LABEL[mode];
+    if (next) showStatus("", "");
+  }
+
+  function showViews() {
+    views.hidden = false;
+    viewBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.view === view));
+  }
+
+  function setView(next) {
+    if (next === view) return;
+    if (view === "plain") plain = textEl.value; else original = textEl.value;
+    view = next;
+    textEl.value = view === "plain" ? plain : original;
+    autoGrow(textEl);
+    viewBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.view === view));
   }
 
   async function copyResult() {
-    if (!output.value) return;
+    if (!textEl.value) return;
     try {
-      await navigator.clipboard.writeText(output.value);
-      flashCopy("Copied");
+      await navigator.clipboard.writeText(textEl.value);
+      const span = copyBtn.querySelector("span");
+      span.textContent = "Copied";
       showStatus("Copied to the clipboard.", "success");
+      setTimeout(() => (span.textContent = "Copy"), 1500);
     } catch {
-      output.focus();
-      output.select();
+      textEl.focus(); textEl.select();
       showStatus("Press Command C to copy.", "error");
     }
   }
 
-  function flashCopy(label) {
-    const span = copyBtn.querySelector("span");
-    span.textContent = label;
-    setTimeout(() => (span.textContent = "Copy"), 1500);
-  }
-
-  function setBusy(next) {
-    busy = next;
-    input.disabled = next;
-    instruction.disabled = next;
-    segButtons.forEach((b) => (b.disabled = next));
-    primary.classList.toggle("is-busy", next);
-    primaryLabel.textContent = next
-      ? "Stop"
-      : mode === "shorten" ? "Shorten" : mode === "clean" ? "Clean up" : "Rewrite";
-  }
-
-  function showStatus(message, state) {
-    status.textContent = message;
-    status.dataset.state = state || "";
-  }
+  function showStatus(message, state) { status.textContent = message; status.dataset.state = state || ""; }
 
   function showProvider(values) {
     const name = values.provider === "openai" ? "OpenAI" : "OpenRouter";
@@ -256,73 +259,52 @@
     provider.textContent = model ? `${name} · ${model}` : name;
   }
 
-  function updateCount() {
-    const text = input.value.trim();
-    const words = text ? text.split(/\s+/).length : 0;
-    const chars = input.value.length;
-    count.textContent = `${words.toLocaleString()} ${words === 1 ? "word" : "words"} · ${chars.toLocaleString()} ${chars === 1 ? "character" : "characters"}`;
-  }
-
   async function onInput() {
-    updateCount();
-    autoGrow(input);
+    autoGrow(textEl);
+    if (hasResult) { if (view === "plain") plain = textEl.value; else original = textEl.value; }
     const { rememberDraft } = await chrome.storage.local.get(["rememberDraft"]);
-    if (rememberDraft) chrome.storage.local.set({ draft: input.value });
+    if (rememberDraft && !hasResult) chrome.storage.local.set({ draft: textEl.value });
   }
 
-  function onEditorKeydown(event) {
-    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-      event.preventDefault();
-      if (!busy) rewrite();
+  function onEditorKeydown(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); if (!busy) run(); }
+    if (e.key === "Escape") {
+      if (menuOpen) { closeMenu(); return; }
+      setOpen(false); launcher.focus();
     }
-    if (event.key === "Escape") {
-      setOpen(false);
-      launcher.focus();
-    }
+  }
+
+  function autoGrow(el) {
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight + 2, 340)}px`;
   }
 
   function restoreLauncher(position) {
-    if (!position || !Number.isFinite(position.top) || !position.side) {
-      shell.dataset.side = "right";
-      return;
-    }
+    if (!position || !Number.isFinite(position.top) || !position.side) { shell.dataset.side = "right"; return; }
     launcher.style.top = `${clampTop(position.top)}px`;
     launcher.style.bottom = "auto";
     launcher.style[position.side] = "18px";
     launcher.style[position.side === "right" ? "left" : "right"] = "auto";
     shell.dataset.side = position.side;
   }
-
-  function clampTop(value) {
-    return Math.max(12, Math.min(window.innerHeight - 64, value));
-  }
+  function clampTop(v) { return Math.max(12, Math.min(window.innerHeight - 64, v)); }
 
   function makeDraggable() {
-    let startX = 0, startY = 0, startTop = 0, pointerId = null;
-
-    launcher.addEventListener("pointerdown", (event) => {
-      pointerId = event.pointerId;
-      startX = event.clientX;
-      startY = event.clientY;
-      startTop = launcher.getBoundingClientRect().top;
-      launcher.setPointerCapture(pointerId);
-    });
-
-    launcher.addEventListener("pointermove", (event) => {
-      if (pointerId !== event.pointerId) return;
-      if (Math.hypot(event.clientX - startX, event.clientY - startY) < 5) return;
+    let sx = 0, sy = 0, st = 0, pid = null;
+    launcher.addEventListener("pointerdown", (e) => { pid = e.pointerId; sx = e.clientX; sy = e.clientY; st = launcher.getBoundingClientRect().top; launcher.setPointerCapture(pid); });
+    launcher.addEventListener("pointermove", (e) => {
+      if (pid !== e.pointerId) return;
+      if (Math.hypot(e.clientX - sx, e.clientY - sy) < 5) return;
       dragged = true;
-      launcher.style.top = `${clampTop(startTop + event.clientY - startY)}px`;
+      launcher.style.top = `${clampTop(st + e.clientY - sy)}px`;
       launcher.style.bottom = "auto";
     });
-
-    launcher.addEventListener("pointerup", (event) => {
-      if (pointerId !== event.pointerId) return;
-      launcher.releasePointerCapture(pointerId);
-      pointerId = null;
+    launcher.addEventListener("pointerup", (e) => {
+      if (pid !== e.pointerId) return;
+      launcher.releasePointerCapture(pid); pid = null;
       if (!dragged) return;
       const rect = launcher.getBoundingClientRect();
-      const side = event.clientX < window.innerWidth / 2 ? "left" : "right";
+      const side = e.clientX < window.innerWidth / 2 ? "left" : "right";
       launcher.style[side] = "18px";
       launcher.style[side === "right" ? "left" : "right"] = "auto";
       shell.dataset.side = side;

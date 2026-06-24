@@ -6,6 +6,7 @@ const DEFAULTS = {
   openrouterKey: "",
   openaiModel: "gpt-4o-mini",
   openrouterModel: "openai/gpt-4o-mini",
+  twoPass: true,
   rememberDraft: true
 };
 
@@ -31,7 +32,6 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
     if (stored[key] === undefined) missing[key] = value;
   }
   if (Object.keys(missing).length) await chrome.storage.local.set(missing);
-
   if (reason === "install") chrome.runtime.openOptionsPage();
 });
 
@@ -52,7 +52,6 @@ async function toggleOnTab(tabId) {
   }
 }
 
-// One-off requests: open settings, list models, test the connection.
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "plain-writing:open-options") {
     chrome.runtime.openOptionsPage();
@@ -68,16 +67,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 });
 
-// Streaming rewrites run over a long-lived port so output arrives live.
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== "pw-rewrite") return;
-
   const controller = new AbortController();
   port.onDisconnect.addListener(() => controller.abort());
-
   port.onMessage.addListener((message) => {
     if (message?.type !== "start") return;
-    streamRewrite(message, port, controller.signal).catch((error) => {
+    runPasses(message, port, controller.signal).catch((error) => {
       safePost(port, { type: "error", error: readableError(error) });
     });
   });
@@ -99,11 +95,12 @@ async function resolveConfig() {
     provider,
     endpoint: meta.chat,
     apiKey: settings[meta.keyField]?.trim() || "",
-    model: settings[meta.modelField]?.trim() || DEFAULTS[meta.modelField]
+    model: settings[meta.modelField]?.trim() || DEFAULTS[meta.modelField],
+    twoPass: settings.twoPass !== false
   };
 }
 
-function buildMessages({ text, mode = "rewrite", instruction = "" }) {
+function firstPassMessages({ text, mode = "rewrite", instruction = "" }) {
   const task = [
     MODE_PROMPTS[mode] || MODE_PROMPTS.rewrite,
     instruction.trim() ? `Extra request from the writer: ${instruction.trim()}` : "",
@@ -111,10 +108,16 @@ function buildMessages({ text, mode = "rewrite", instruction = "" }) {
     "Text to revise:",
     text
   ].filter(Boolean).join("\n");
-
   return [
     { role: "system", content: PLAIN_WRITING_PROMPT },
     { role: "user", content: task }
+  ];
+}
+
+function secondPassMessages(draft) {
+  return [
+    { role: "system", content: PLAIN_WRITING_PROMPT },
+    { role: "user", content: `${REFINE_LEAD}\n${draft}` }
   ];
 }
 
@@ -130,7 +133,10 @@ function requestHeaders(config) {
   return headers;
 }
 
-async function streamRewrite(payload, port, signal) {
+// The two-pass flow. Pass one applies the rules. Pass two re-reads the draft and
+// cuts what does not earn its place. Pass one is not streamed, so the reader sees
+// one clean stream of the final text in pass two.
+async function runPasses(payload, port, signal) {
   const text = String(payload.text || "").trim();
   if (!text) {
     safePost(port, { type: "error", error: "Paste some text first." });
@@ -143,20 +149,47 @@ async function streamRewrite(payload, port, signal) {
     return;
   }
 
+  if (!config.twoPass) {
+    safePost(port, { type: "phase", phase: "rewriting" });
+    const full = await streamCompletion(config, firstPassMessages({ ...payload, text }), port, signal);
+    finish(port, full);
+    return;
+  }
+
+  safePost(port, { type: "phase", phase: "rewriting" });
+  const draft = await completeOnce(config, firstPassMessages({ ...payload, text }), signal);
+  if (!draft.trim()) throw new Error("The model returned no text. Try another model.");
+
+  safePost(port, { type: "phase", phase: "refining" });
+  const full = await streamCompletion(config, secondPassMessages(draft.trim()), port, signal);
+  finish(port, full);
+}
+
+function finish(port, full) {
+  if (!full.trim()) throw new Error("The model returned no text. Try another model.");
+  safePost(port, { type: "done", text: full.trim() });
+}
+
+async function completeOnce(config, messages, signal) {
   const response = await fetch(config.endpoint, {
     method: "POST",
     signal,
     headers: requestHeaders(config),
-    body: JSON.stringify({
-      model: config.model,
-      messages: buildMessages({ ...payload, text }),
-      stream: true
-    })
+    body: JSON.stringify({ model: config.model, messages, stream: false })
   });
+  if (!response.ok) throw new Error(await errorMessage(response));
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
+}
 
-  if (!response.ok) {
-    throw new Error(await errorMessage(response));
-  }
+async function streamCompletion(config, messages, port, signal) {
+  const response = await fetch(config.endpoint, {
+    method: "POST",
+    signal,
+    headers: requestHeaders(config),
+    body: JSON.stringify({ model: config.model, messages, stream: true })
+  });
+  if (!response.ok) throw new Error(await errorMessage(response));
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -166,17 +199,14 @@ async function streamRewrite(payload, port, signal) {
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
-
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split("\n");
     buffer = lines.pop() || "";
-
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed.startsWith("data:")) continue;
       const data = trimmed.slice(5).trim();
       if (data === "[DONE]") continue;
-
       let parsed;
       try {
         parsed = JSON.parse(data);
@@ -188,15 +218,10 @@ async function streamRewrite(payload, port, signal) {
         full += delta;
         safePost(port, { type: "delta", text: delta });
       }
-      const apiError = parsed.error?.message;
-      if (apiError) throw new Error(apiError);
+      if (parsed.error?.message) throw new Error(parsed.error.message);
     }
   }
-
-  if (!full.trim()) {
-    throw new Error("The model returned no text. Try another model.");
-  }
-  safePost(port, { type: "done", text: full.trim() });
+  return full;
 }
 
 async function testConnection(formSettings) {
@@ -210,26 +235,13 @@ async function testConnection(formSettings) {
       model: String(formSettings?.model || DEFAULTS[meta.modelField]).trim()
     };
     if (!config.apiKey) return { ok: false, error: "Enter an API key first." };
-
-    const response = await fetch(config.endpoint, {
-      method: "POST",
-      headers: requestHeaders(config),
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          { role: "system", content: PLAIN_WRITING_PROMPT },
-          { role: "user", content: "Rewrite the text below.\n\nText to revise:\nIt is worth noting that this is really very clear." }
-        ],
-        stream: false
-      })
-    });
-
-    if (!response.ok) return { ok: false, error: await errorMessage(response) };
-
-    const data = await response.json();
-    const output = data.choices?.[0]?.message?.content?.trim();
-    if (!output) return { ok: false, error: "The model returned no text. Try another model." };
-    return { ok: true, text: output };
+    const output = await completeOnce(
+      config,
+      firstPassMessages({ text: "It is worth noting that this is really very clear." }),
+      undefined
+    );
+    if (!output.trim()) return { ok: false, error: "The model returned no text. Try another model." };
+    return { ok: true, text: output.trim() };
   } catch (error) {
     return { ok: false, error: readableError(error) };
   }
@@ -242,28 +254,19 @@ async function listModels(providerName, key) {
     const headers = {};
     const trimmedKey = String(key || "").trim();
     if (trimmedKey) headers.Authorization = `Bearer ${trimmedKey}`;
-
     if (provider === "openai" && !trimmedKey) {
       return { ok: false, error: "Enter your OpenAI key to load its model list." };
     }
-
     const response = await fetch(meta.models, { headers });
     if (!response.ok) return { ok: false, error: await errorMessage(response) };
-
     const data = await response.json();
     const raw = Array.isArray(data.data) ? data.data : [];
-
-    let models = raw.map((item) => ({
-      id: item.id,
-      label: item.name || item.id
-    }));
-
+    let models = raw.map((item) => ({ id: item.id, label: item.name || item.id }));
     if (provider === "openai") {
       models = models
         .filter((m) => /^(gpt|o\d|chatgpt)/i.test(m.id))
         .filter((m) => !/(embedding|whisper|tts|audio|image|realtime|moderation|dall-e|transcribe|search)/i.test(m.id));
     }
-
     models.sort((a, b) => a.id.localeCompare(b.id));
     if (!models.length) return { ok: false, error: "No models were returned." };
     return { ok: true, models };
@@ -285,8 +288,6 @@ async function errorMessage(response) {
 
 function readableError(error) {
   if (error?.name === "AbortError") return "The rewrite was cancelled.";
-  if (error instanceof TypeError) {
-    return "Could not reach the provider. Check your internet connection.";
-  }
+  if (error instanceof TypeError) return "Could not reach the provider. Check your internet connection.";
   return error?.message || "Something went wrong.";
 }

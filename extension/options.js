@@ -21,6 +21,7 @@ const modelList = document.querySelector("#model-list");
 const loadModels = document.querySelector("#load-models");
 const modelHelp = document.querySelector("#model-help");
 const rememberDraft = document.querySelector("#remember-draft");
+const twoPass = document.querySelector("#two-pass");
 const testButton = document.querySelector("#test");
 const status = document.querySelector("#status");
 
@@ -38,7 +39,7 @@ init();
 
 async function init() {
   const saved = await chrome.storage.local.get([
-    "provider", "openaiKey", "openrouterKey", "openaiModel", "openrouterModel", "rememberDraft"
+    "provider", "openaiKey", "openrouterKey", "openaiModel", "openrouterModel", "rememberDraft", "twoPass"
   ]);
   state.provider = PROVIDER_INFO[saved.provider] ? saved.provider : "openrouter";
   state.keys.openai = saved.openaiKey || "";
@@ -46,6 +47,7 @@ async function init() {
   state.models.openai = saved.openaiModel || PROVIDER_INFO.openai.defaultModel;
   state.models.openrouter = saved.openrouterModel || PROVIDER_INFO.openrouter.defaultModel;
   rememberDraft.checked = saved.rememberDraft !== false;
+  twoPass.checked = saved.twoPass !== false;
   applyProvider();
 }
 
@@ -139,7 +141,8 @@ async function save() {
     openrouterKey: state.keys.openrouter,
     openaiModel: state.models.openai || PROVIDER_INFO.openai.defaultModel,
     openrouterModel: state.models.openrouter || PROVIDER_INFO.openrouter.defaultModel,
-    rememberDraft: rememberDraft.checked
+    rememberDraft: rememberDraft.checked,
+    twoPass: twoPass.checked
   });
   if (!rememberDraft.checked) await chrome.storage.local.remove("draft");
 }
