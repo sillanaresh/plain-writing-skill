@@ -3,8 +3,8 @@
   --muted: #5d5d70;
   --line: rgba(20, 20, 35, 0.1);
   --bg: #ffffff;
-  --accent: #4f46e5;
-  --accent-press: #4338ca;
+  --accent: #1c1c28;
+  --accent-press: #000000;
   --success: #137a40;
   --error: #c5343a;
   --glass: rgba(255, 255, 255, 0.72);
@@ -76,8 +76,8 @@ h2 { margin: 0 0 14px; font-size: 12px; font-weight: 650; letter-spacing: 0.04em
 .provider-option:hover { background: var(--glass-strong); }
 .provider-option.is-active {
   border-color: var(--accent);
-  background: rgba(79, 70, 229, 0.08);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14);
+  background: rgba(28, 28, 40, 0.05);
+  box-shadow: 0 0 0 3px rgba(28, 28, 40, 0.12);
 }
 
 .field { display: block; }
@@ -95,8 +95,8 @@ input[type="text"], input[type="password"] {
 input:focus {
   outline: none;
   background: var(--glass-strong);
-  border-color: rgba(79, 70, 229, 0.5);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+  border-color: rgba(28, 28, 40, 0.45);
+  box-shadow: 0 0 0 3px rgba(28, 28, 40, 0.12);
 }
 
 small { display: block; margin-top: 7px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
@@ -156,7 +156,7 @@ small { display: block; margin-top: 7px; color: var(--muted); font-size: 12.5px;
   border: 0;
   color: #fff;
   background: var(--accent);
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 12px rgba(20, 20, 40, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 .primary:hover { background: var(--accent-press); }
 button:active { transform: translateY(1px); }

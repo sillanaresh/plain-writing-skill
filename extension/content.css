@@ -2,8 +2,8 @@
   --ink: #16161f;
   --muted: #5d5d70;
   --bg: #ffffff;
-  --accent: #4f46e5;
-  --accent-press: #4338ca;
+  --accent: #1c1c28;
+  --accent-press: #000000;
   --success: #137a40;
   --error: #c5343a;
 
@@ -171,8 +171,8 @@ input:focus-visible {
 .pw-textarea:focus, .pw-output:focus, .pw-instruction:focus {
   outline: none;
   background: var(--glass-strong);
-  border-color: rgba(79, 70, 229, 0.5);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+  border-color: rgba(28, 28, 40, 0.45);
+  box-shadow: 0 0 0 3px rgba(28, 28, 40, 0.12);
 }
 .pw-textarea::placeholder, .pw-instruction::placeholder { color: var(--muted); opacity: 0.85; }
 .pw-textarea:disabled, .pw-instruction:disabled { opacity: 0.6; cursor: not-allowed; }
