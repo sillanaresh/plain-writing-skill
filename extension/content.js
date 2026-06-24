@@ -48,7 +48,7 @@
           <span class="pw-views-gap"></span>
           <button class="pw-copy" type="button" aria-label="Copy" title="Copy">
             <svg class="pw-copy-icon" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
-            <svg class="pw-check-icon" viewBox="0 0 24 24" hidden><path d="m5 13 4 4L19 7"></path></svg>
+            <svg class="pw-check-icon" viewBox="0 0 24 24"><path d="m5 13 4 4L19 7"></path></svg>
           </button>
         </div>
 
@@ -93,8 +93,6 @@
   const views = $(".pw-views");
   const viewBtns = [...shadow.querySelectorAll(".pw-view")];
   const copyBtn = $(".pw-copy");
-  const copyIcon = $(".pw-copy-icon");
-  const checkIcon = $(".pw-check-icon");
   const provider = $(".pw-provider");
 
   const MODE_LABEL = { rewrite: "Rewrite", shorten: "Shorten", clean: "Clean up" };
@@ -278,12 +276,10 @@
     if (!out) return;
     try {
       await navigator.clipboard.writeText(out);
-      copyIcon.hidden = true;
-      checkIcon.hidden = false;
       copyBtn.classList.add("is-copied");
       copyBtn.animate([{ transform: "scale(0.9)" }, { transform: "scale(1)" }], { duration: 180, easing: "ease-out" });
       showStatus("Copied to the clipboard.", "success");
-      setTimeout(() => { copyIcon.hidden = false; checkIcon.hidden = true; copyBtn.classList.remove("is-copied"); }, 1600);
+      setTimeout(() => copyBtn.classList.remove("is-copied"), 1600);
     } catch {
       showStatus("Could not copy. Select the text and press Command C.", "error");
     }
