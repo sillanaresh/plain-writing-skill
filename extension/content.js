@@ -98,8 +98,21 @@
   const MODE_LABEL = { rewrite: "Rewrite", shorten: "Shorten", clean: "Clean up" };
   const STALE = "Plain Writing was updated. Refresh this page to use it.";
   // The extension context is severed when the extension reloads while this page
-  // stays open. chrome.runtime.id becomes undefined; any runtime call then throws.
-  const alive = () => !!(chrome.runtime && chrome.runtime.id);
+  // stays open. chrome.runtime.id becomes undefined, and runtime calls then throw.
+  const alive = () => { try { return !!(chrome.runtime && chrome.runtime.id); } catch { return false; } };
+
+  // A stale content script can still throw "Extension context invalidated" from a
+  // path we did not guard. Swallow only that one error so it never reaches the
+  // page or the extension error log. Everything else surfaces as normal.
+  const swallowStale = (event) => {
+    const message = String(event?.reason?.message || event?.message || "");
+    if (message.includes("context invalidated")) {
+      event.preventDefault?.();
+      event.stopImmediatePropagation?.();
+    }
+  };
+  window.addEventListener("error", swallowStale, true);
+  window.addEventListener("unhandledrejection", swallowStale, true);
 
   let open = false;
   let busy = false;
@@ -234,16 +247,20 @@
   }
 
   function cancel() {
-    if (activePort) activePort.disconnect();
-    activePort = null;
+    disconnectPort();
     textEl.value = original || textEl.value;
     autoGrow(textEl);
     setBusy(false);
     showStatus("Stopped.", "");
   }
 
+  function disconnectPort() {
+    try { if (activePort) activePort.disconnect(); } catch { /* stale port */ }
+    activePort = null;
+  }
+
   function finishRun(message, state) {
-    if (activePort) { activePort.disconnect(); activePort = null; }
+    disconnectPort();
     setBusy(false);
     showStatus(message, state);
   }
