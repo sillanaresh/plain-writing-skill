@@ -7,7 +7,7 @@ const DEFAULTS = {
   openaiModel: "gpt-4o-mini",
   openrouterModel: "openai/gpt-4o-mini",
   twoPass: true,
-  rememberDraft: true
+  keepHistory: true
 };
 
 const PROVIDERS = {

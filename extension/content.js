@@ -29,6 +29,9 @@
           <span class="pw-wordmark">Plain Writing</span>
         </div>
         <div class="pw-header-actions">
+          <button class="pw-icon-btn pw-new" type="button" aria-label="New" title="New">
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+          </button>
           <button class="pw-icon-btn pw-settings" type="button" aria-label="Settings" title="Settings">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 13a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0 1.6 1.6 0 0 0-2.6-1.1 2 2 0 1 1-2.8-2.8A1.6 1.6 0 0 0 4 13a2 2 0 0 1 0-4 1.6 1.6 0 0 0 1.5-2.6 2 2 0 1 1 2.8-2.8A1.6 1.6 0 0 0 11 4.6V4a2 2 0 0 1 4 0 1.6 1.6 0 0 0 2.7 1.1 2 2 0 1 1 2.8 2.8A1.6 1.6 0 0 0 20 11Z"></path></svg>
           </button>
@@ -41,32 +44,28 @@
       <div class="pw-body">
         <div class="pw-views" hidden>
           <button class="pw-view is-active" type="button" data-view="plain">Plain</button>
-          <button class="pw-view" type="button" data-view="original">Original</button>
+          <button class="pw-view" type="button" data-view="diff">Changes</button>
           <span class="pw-views-gap"></span>
-          <button class="pw-copy" type="button">
+          <button class="pw-copy" type="button" aria-label="Copy" title="Copy">
             <svg class="pw-copy-icon" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
             <svg class="pw-check-icon" viewBox="0 0 24 24" hidden><path d="m5 13 4 4L19 7"></path></svg>
-            <span>Copy</span>
           </button>
         </div>
 
         <textarea class="pw-text" placeholder="Paste what you wrote."></textarea>
+        <div class="pw-diff" hidden></div>
+        <input class="pw-note" type="text" placeholder="Add a note to steer it, optional">
         <p class="pw-status" role="status" aria-live="polite"></p>
 
         <div class="pw-actionbar">
           <div class="pw-run">
             <button class="pw-run-go" type="button"><span class="pw-run-label">Rewrite</span></button>
-            <button class="pw-run-menu" type="button" aria-label="Options" aria-haspopup="true">${caret}</button>
+            <button class="pw-run-menu" type="button" aria-label="Choose action" aria-haspopup="true">${caret}</button>
           </div>
           <div class="pw-menu" hidden role="menu">
             <button class="pw-menu-item is-active" type="button" role="menuitem" data-mode="rewrite">Rewrite clearly</button>
             <button class="pw-menu-item" type="button" role="menuitem" data-mode="shorten">Make it shorter</button>
             <button class="pw-menu-item" type="button" role="menuitem" data-mode="clean">Light cleanup</button>
-            <div class="pw-menu-sep"></div>
-            <label class="pw-menu-note">
-              <span>Add a note</span>
-              <input class="pw-note" type="text" placeholder="e.g. keep it casual">
-            </label>
           </div>
         </div>
       </div>
@@ -83,6 +82,7 @@
   const launcher = $(".pw-launcher");
   const panel = $(".pw-panel");
   const textEl = $(".pw-text");
+  const diffEl = $(".pw-diff");
   const noteEl = $(".pw-note");
   const status = $(".pw-status");
   const runGo = $(".pw-run-go");
@@ -110,23 +110,20 @@
   let plain = "";
   let activePort = null;
 
-  const saved = await chrome.storage.local.get([
-    "provider", "openaiModel", "openrouterModel", "rememberDraft", "draft", "launcherPosition"
-  ]);
+  const saved = await chrome.storage.local.get(["provider", "openaiModel", "openrouterModel", "launcherPosition"]);
   showProvider(saved);
-  if (saved.rememberDraft && saved.draft) textEl.value = saved.draft;
   autoGrow(textEl);
   restoreLauncher(saved.launcherPosition);
 
   launcher.addEventListener("click", () => { if (dragged) { dragged = false; return; } setOpen(!open); });
   $(".pw-close").addEventListener("click", () => setOpen(false));
+  $(".pw-new").addEventListener("click", clearAll);
   $(".pw-settings").addEventListener("click", () => chrome.runtime.sendMessage({ type: "plain-writing:open-options" }));
   runGo.addEventListener("click", () => (busy ? cancel() : run()));
   runMenu.addEventListener("click", toggleMenu);
   menuItems.forEach((b) => b.addEventListener("click", () => selectMode(b.dataset.mode)));
   viewBtns.forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
   copyBtn.addEventListener("click", copyResult);
-  noteEl.addEventListener("input", () => runMenu.classList.toggle("is-noted", !!noteEl.value.trim()));
   textEl.addEventListener("input", onInput);
   textEl.addEventListener("keydown", onEditorKeydown);
   noteEl.addEventListener("keydown", onEditorKeydown);
@@ -150,6 +147,22 @@
     else closeMenu();
   }
 
+  function clearAll() {
+    if (busy) cancel();
+    textEl.value = "";
+    noteEl.value = "";
+    plain = "";
+    original = "";
+    hasResult = false;
+    view = "plain";
+    views.hidden = true;
+    diffEl.hidden = true;
+    textEl.hidden = false;
+    showStatus("", "");
+    autoGrow(textEl);
+    textEl.focus();
+  }
+
   function selectMode(next) {
     mode = next;
     runLabel.textContent = MODE_LABEL[mode];
@@ -162,6 +175,7 @@
   function closeMenu() { menu.hidden = true; menuOpen = false; runMenu.setAttribute("aria-expanded", "false"); }
 
   function run() {
+    if (view !== "plain") setView("plain");
     const text = textEl.value.trim();
     if (!text) { showStatus("Paste some text first.", "error"); textEl.focus(); return; }
 
@@ -190,6 +204,7 @@
         crossfade(textEl);
         revealViews();
         finishRun("Done. Edit if you like, then copy.", "success");
+        saveHistory(original, plain);
         textEl.focus();
       } else if (m.type === "error") {
         if (cleared) textEl.value = original;
@@ -237,12 +252,21 @@
 
   function setView(next) {
     if (next === view) return;
-    if (view === "plain") plain = textEl.value; else original = textEl.value;
+    if (view === "plain") plain = textEl.value;
     view = next;
-    textEl.value = view === "plain" ? plain : original;
-    autoGrow(textEl);
-    crossfade(textEl);
     viewBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.view === view));
+    if (view === "diff") {
+      renderDiff(original, plain);
+      textEl.hidden = true;
+      diffEl.hidden = false;
+      crossfade(diffEl);
+    } else {
+      diffEl.hidden = true;
+      textEl.hidden = false;
+      textEl.value = plain;
+      autoGrow(textEl);
+      crossfade(textEl);
+    }
   }
 
   function crossfade(el) {
@@ -250,24 +274,18 @@
   }
 
   async function copyResult() {
-    if (!textEl.value) return;
+    const out = view === "plain" ? textEl.value : plain;
+    if (!out) return;
     try {
-      await navigator.clipboard.writeText(textEl.value);
+      await navigator.clipboard.writeText(out);
       copyIcon.hidden = true;
       checkIcon.hidden = false;
-      copyBtn.querySelector("span").textContent = "Copied";
       copyBtn.classList.add("is-copied");
-      copyBtn.animate([{ transform: "scale(0.94)" }, { transform: "scale(1)" }], { duration: 180, easing: "ease-out" });
+      copyBtn.animate([{ transform: "scale(0.9)" }, { transform: "scale(1)" }], { duration: 180, easing: "ease-out" });
       showStatus("Copied to the clipboard.", "success");
-      setTimeout(() => {
-        copyIcon.hidden = false;
-        checkIcon.hidden = true;
-        copyBtn.querySelector("span").textContent = "Copy";
-        copyBtn.classList.remove("is-copied");
-      }, 1600);
+      setTimeout(() => { copyIcon.hidden = false; checkIcon.hidden = true; copyBtn.classList.remove("is-copied"); }, 1600);
     } catch {
-      textEl.focus(); textEl.select();
-      showStatus("Press Command C to copy.", "error");
+      showStatus("Could not copy. Select the text and press Command C.", "error");
     }
   }
 
@@ -279,11 +297,9 @@
     provider.textContent = model ? `${name} · ${model}` : name;
   }
 
-  async function onInput() {
+  function onInput() {
     autoGrow(textEl);
-    if (hasResult) { if (view === "plain") plain = textEl.value; else original = textEl.value; }
-    const { rememberDraft } = await chrome.storage.local.get(["rememberDraft"]);
-    if (rememberDraft && !hasResult) chrome.storage.local.set({ draft: textEl.value });
+    if (hasResult && view === "plain") plain = textEl.value;
   }
 
   function onEditorKeydown(e) {
@@ -297,6 +313,53 @@
   function autoGrow(el) {
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight + 2, 340)}px`;
+  }
+
+  // Word-level diff between the original and the plain version.
+  function renderDiff(a, b) {
+    const parts = diffWords(a, b);
+    if (!parts) {
+      diffEl.innerHTML = `<span class="pw-diff-note">The text is long, so the change view is off. The Plain tab shows the result.</span>`;
+      return;
+    }
+    diffEl.innerHTML = parts.map((seg) => {
+      const t = escapeHtml(seg.v);
+      if (/^\s+$/.test(seg.v) || seg.type === "same") return t;
+      return seg.type === "del" ? `<del class="pw-del">${t}</del>` : `<ins class="pw-add">${t}</ins>`;
+    }).join("");
+  }
+
+  function diffWords(a, b) {
+    const A = a.split(/(\s+)/).filter((s) => s !== "");
+    const B = b.split(/(\s+)/).filter((s) => s !== "");
+    const n = A.length, m = B.length;
+    if (n * m > 4000000) return null; // too large to diff comfortably
+    const dp = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) {
+      for (let j = m - 1; j >= 0; j--) {
+        dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+    const out = [];
+    let i = 0, j = 0;
+    while (i < n && j < m) {
+      if (A[i] === B[j]) { out.push({ type: "same", v: A[i] }); i++; j++; }
+      else if (dp[i + 1][j] >= dp[i][j + 1]) { out.push({ type: "del", v: A[i] }); i++; }
+      else { out.push({ type: "add", v: B[j] }); j++; }
+    }
+    while (i < n) out.push({ type: "del", v: A[i++] });
+    while (j < m) out.push({ type: "add", v: B[j++] });
+    return out;
+  }
+
+  function escapeHtml(v) { return String(v).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+  async function saveHistory(o, p) {
+    const { keepHistory, history = [] } = await chrome.storage.local.get(["keepHistory", "history"]);
+    if (keepHistory === false) return;
+    history.unshift({ o, p, at: Date.now() });
+    if (history.length > 20) history.length = 20;
+    chrome.storage.local.set({ history });
   }
 
   function restoreLauncher(position) {

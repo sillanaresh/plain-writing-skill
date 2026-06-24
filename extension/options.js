@@ -20,8 +20,10 @@ const modelInput = document.querySelector("#model");
 const modelList = document.querySelector("#model-list");
 const loadModels = document.querySelector("#load-models");
 const modelHelp = document.querySelector("#model-help");
-const rememberDraft = document.querySelector("#remember-draft");
 const twoPass = document.querySelector("#two-pass");
+const keepHistory = document.querySelector("#keep-history");
+const historyList = document.querySelector("#history-list");
+const clearHistory = document.querySelector("#clear-history");
 const testButton = document.querySelector("#test");
 const status = document.querySelector("#status");
 
@@ -39,16 +41,48 @@ init();
 
 async function init() {
   const saved = await chrome.storage.local.get([
-    "provider", "openaiKey", "openrouterKey", "openaiModel", "openrouterModel", "rememberDraft", "twoPass"
+    "provider", "openaiKey", "openrouterKey", "openaiModel", "openrouterModel", "twoPass", "keepHistory"
   ]);
   state.provider = PROVIDER_INFO[saved.provider] ? saved.provider : "openrouter";
   state.keys.openai = saved.openaiKey || "";
   state.keys.openrouter = saved.openrouterKey || "";
   state.models.openai = saved.openaiModel || PROVIDER_INFO.openai.defaultModel;
   state.models.openrouter = saved.openrouterModel || PROVIDER_INFO.openrouter.defaultModel;
-  rememberDraft.checked = saved.rememberDraft !== false;
   twoPass.checked = saved.twoPass !== false;
+  keepHistory.checked = saved.keepHistory !== false;
   applyProvider();
+  renderHistory();
+}
+
+keepHistory.addEventListener("change", async () => {
+  await chrome.storage.local.set({ keepHistory: keepHistory.checked });
+  if (!keepHistory.checked) await chrome.storage.local.remove("history");
+  renderHistory();
+});
+
+clearHistory.addEventListener("click", async () => {
+  await chrome.storage.local.remove("history");
+  renderHistory();
+});
+
+async function renderHistory() {
+  const { history = [] } = await chrome.storage.local.get(["history"]);
+  const show = keepHistory.checked && history.length > 0;
+  historyList.hidden = !show;
+  clearHistory.hidden = !show;
+  if (!show) { historyList.innerHTML = ""; return; }
+  historyList.innerHTML = history.map((item, i) => `
+    <div class="history-item">
+      <p class="history-text">${escapeHtml(item.p)}</p>
+      <button class="history-copy" type="button" data-i="${i}" aria-label="Copy">Copy</button>
+    </div>`).join("");
+  historyList.querySelectorAll(".history-copy").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(history[Number(btn.dataset.i)].p);
+      btn.textContent = "Copied";
+      setTimeout(() => (btn.textContent = "Copy"), 1500);
+    });
+  });
 }
 
 providerOptions.forEach((btn) => {
@@ -141,10 +175,9 @@ async function save() {
     openrouterKey: state.keys.openrouter,
     openaiModel: state.models.openai || PROVIDER_INFO.openai.defaultModel,
     openrouterModel: state.models.openrouter || PROVIDER_INFO.openrouter.defaultModel,
-    rememberDraft: rememberDraft.checked,
-    twoPass: twoPass.checked
+    twoPass: twoPass.checked,
+    keepHistory: keepHistory.checked
   });
-  if (!rememberDraft.checked) await chrome.storage.local.remove("draft");
 }
 
 async function fetchModels() {

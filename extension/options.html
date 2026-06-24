@@ -65,14 +65,16 @@
       </section>
 
       <section>
-        <h2>Drafts</h2>
+        <h2>History</h2>
         <label class="check-row">
-          <input id="remember-draft" type="checkbox">
+          <input id="keep-history" type="checkbox">
           <span>
-            <strong>Remember unfinished text</strong>
-            <small>Keep the last text you pasted in this browser profile.</small>
+            <strong>Keep a local history</strong>
+            <small>Store your recent rewrites in this browser profile so you can find them again. They never leave this device.</small>
           </span>
         </label>
+        <div id="history-list" class="history" hidden></div>
+        <button id="clear-history" class="ghost-btn history-clear" type="button" hidden>Clear history</button>
       </section>
 
       <div class="actions">

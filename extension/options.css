@@ -136,6 +136,41 @@ small { display: block; margin-top: 7px; color: var(--muted); font-size: 12.5px;
 .check-row strong { display: block; font-size: 14px; font-weight: 600; }
 .check-row small { margin-top: 3px; }
 
+.history { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.history-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--fill);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.history-text {
+  margin: 0;
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.history-copy {
+  flex: none;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 560;
+  cursor: pointer;
+}
+.history-copy:hover { background: var(--fill); color: var(--ink); }
+.history-clear { margin-top: 12px; }
+
 .actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 22px; }
 .secondary { padding: 0 16px; background: var(--paper); border: 1px solid var(--line); }
 .secondary:hover { background: var(--fill); }
